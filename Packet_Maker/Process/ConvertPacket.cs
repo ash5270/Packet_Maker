@@ -15,7 +15,7 @@ namespace Packet_Maker.Process
     public class ConvertPacket
     {
         public ConvertPacket() { }
-        private bool ConvertClass(string? str, Dictionary<string, StreamWriter> writers)
+        private bool ConvertClass(string? str, StreamWriter writer, string language)
         {
             if (str == null)
                 return false;
@@ -31,10 +31,12 @@ namespace Packet_Maker.Process
                 //loop
                 pattern = @"(?<=@)\w+";
                 var className = Regex.Matches(str, pattern);
+                string re = "";
+                if (language == "cpp")
+                    re = $"class {className[0].Value} :public {className[1].Value} {{";
+                else
+                    re = $"public class {className[0].Value} : {className[1].Value} {{";
 
-                string re = $"class {className[0].Value} : {className[1].Value} {{";
-
-                Console.WriteLine(re);
                 writer.WriteLine(re);
                 return true;
             }
@@ -43,14 +45,13 @@ namespace Packet_Maker.Process
         }
 
         //변수 패턴 매칭
-        private bool ConvertValue(string? str, Dictionary<string, StreamWriter> writers)
+        private bool ConvertValue(string? str, StreamWriter writer, string language)
         {
             if (str == null) return false;
 
             string pattern = @"^(?!.*(#\w+).*(\$\w+)\(.*\))(#\w+ @\w+)$";
             if (!Regex.IsMatch(str, pattern))
                 return false;
-
 
             pattern = @"(?<=#)\w+";
             var valueType = Regex.Match(str, pattern).Value;
@@ -61,14 +62,10 @@ namespace Packet_Maker.Process
             var valueName = Regex.Match(str, pattern).Value;
             string re = string.Format("{0} {1};", valueType, valueName);
             writer.WriteLine(re);
-
-
-
-            Console.WriteLine(re);
             return false;
         }
 
-        private bool ConvertFunc(string? str, Dictionary<string, StreamWriter> writers)
+        private bool ConvertFunc(string? str, StreamWriter writer, string language)
         {
             if (str == null) return false;
             //함수인지 체크
@@ -92,59 +89,74 @@ namespace Packet_Maker.Process
             //함수 인자 확인 
             //일단 ref 받는지 확인
             pattern = @"\(([^)]*)\)";
-            var args= Regex.Match(str, pattern).Value;
-            args= args.Remove(0,1);
-            args=args.Remove(args.Length - 1,1);
+            var args = Regex.Match(str, pattern).Value;
+            args = args.Remove(0, 1);
+            args = args.Remove(args.Length - 1, 1);
             //ref,type,name
-            List<Tuple<bool,string,string>> argumentTypes = new List<Tuple<bool, string, string>>();
+            List<Tuple<bool, string, string>> argumentTypes = new List<Tuple<bool, string, string>>();
 
-            var strs= args.Split(',');
-            for(int i=0; i<strs.Length; i++)
+            var strs = args.Split(',');
+            for (int i = 0; i < strs.Length; i++)
             {
                 bool isRef = false;
                 string type = "";
                 string name = "";
                 if (strs[i].IndexOf("ref") != -1)
                     isRef = true;
-                if (strs[i].IndexOf("#")!=-1)
+                if (strs[i].IndexOf("#") != -1)
                 {
                     int start = strs[i].IndexOf("#");
-                    int end = strs[i].IndexOf(" ",start);
+                    int end = strs[i].IndexOf(" ", start);
                     if (end == -1)
                         end = strs[i].Length;
-                    type = strs[i].Substring(start+1, end - start-1);
+                    type = strs[i].Substring(start + 1, end - start - 1);
                     type = OptionConfigManager.LanguageConfig.GetProperty(language).GetProperty(type).GetString();
                 }
-
-                if(strs[i].IndexOf("@") != -1)
+                if (strs[i].IndexOf("@") != -1)
                 {
-                    int start =strs[i].IndexOf("@");
-                    name = strs[i].Substring(start+1, strs[i].Length-start-1);
+                    int start = strs[i].IndexOf("@");
+                    name = strs[i].Substring(start + 1, strs[i].Length - start - 1);
                 }
 
                 argumentTypes.Add(new Tuple<bool, string, string>(isRef, type, name));
-               
+
             }
 
             string result = "";
 
 
             //loog 돌려서 두번
-            if(language=="cpp")
+            if (language == "cs")
             {
                 result += "public ";
-                result += isOverride?"override ":"";
-                result +=funcReturnType + " ";
-              
+                result += isOverride ? "override " : "";
+                result += funcReturnType + " ";
+
                 result += funcName + "(";
 
-                for(int i=0; i< argumentTypes.Count; i++)
+                for (int i = 0; i < argumentTypes.Count; i++)
                 {
                     string refCheck = argumentTypes[i].Item1 ? "ref " : "";
-                    result += refCheck + argumentTypes[i].Item2 + " " + argumentTypes[i].Item3+",";
+                    result += refCheck + argumentTypes[i].Item2 + " " + argumentTypes[i].Item3 + ",";
                 }
-                result=result.Remove(result.Length-1,1);
-                result += ")\n";  
+                result = result.Remove(result.Length - 1, 1);
+                result += "){\n";
+            }
+
+            else if (language == "cpp")
+            {
+
+                result += funcReturnType + " ";
+
+                result += funcName + "(";
+
+                for (int i = 0; i < argumentTypes.Count; i++)
+                {
+                    string refCheck = argumentTypes[i].Item1 ? "&" : "";
+                    result += argumentTypes[i].Item2 + refCheck + " " + argumentTypes[i].Item3 + ",";
+                }
+                result = result.Remove(result.Length - 1, 1);
+                result += isOverride ? ")override{\n" : "){\n";
             }
 
             writer.Write(result);
@@ -153,9 +165,9 @@ namespace Packet_Maker.Process
             return true;
         }
 
-        public bool ConvertFuncIn(string str, Dictionary<string, StreamWriter> writers)
+        public bool ConvertFuncIn(string str, StreamWriter writer, string language)
         {
-            if (str == "" || str == "{" || str=="}"||str=="\n")
+            if (str == "" || str == "{" || str == "}")
                 return false;
             string pattern = @"#\w+ @\w+";
             string result = "";
@@ -165,16 +177,17 @@ namespace Packet_Maker.Process
                 {
                     result += "\treturn ";
                     var value = Regex.Match(str, @"(?<=@)\w+").Value;
-                    result += value +";";
+                    result += value + ";}";
                     writer.WriteLine(result);
                     return false;
                 }
                 if (Regex.IsMatch(str, @"return"))
                 {
+                    writer.WriteLine("}");
                     return false;
                 }
                 else
-                    result =str+";";
+                    result = str + ";";
             }
             else
             {
@@ -184,7 +197,7 @@ namespace Packet_Maker.Process
                 pattern = @"(?<=@)\w+";
                 var valueName = Regex.Match(str, pattern).Value;
 
-                result = string.Format("\t{0} {1};",valueType,valueName);
+                result = string.Format("\t{0} {1};", valueType, valueName);
             }
 
             writer.WriteLine(result);
@@ -204,38 +217,70 @@ namespace Packet_Maker.Process
             var csfile = File.Open("packet.cs", System.IO.FileMode.OpenOrCreate);
             StreamWriter csWriter = new StreamWriter(csfile);
 
-
-            Dictionary<string, StreamWriter> writers=new Dictionary<string, StreamWriter>();
+            Dictionary<string, StreamWriter> writers = new Dictionary<string, StreamWriter>();
 
             writers.Add("cpp", cppWriter);
             writers.Add("cs", csWriter);
 
+            bool isConvertStart = false;
+
             string? str = "";
+            int count = 0;
             while (str != "~end")
             {
                 str = await reader.ReadLineAsync();
-                if (ConvertClass(str, csWriter))
+                if(isConvertStart&&str=="")
                 {
-
-                }
-                else if (ConvertValue(str, csWriter))
-                {
-
-                }
-                else if (ConvertFunc(str, csWriter))
-                {
-                    str = await reader.ReadLineAsync();
-                    writer.WriteLine("{");
-                    while (ConvertFuncIn(str, csWriter))
+                    foreach (var dir in writers)
                     {
-                        str = await reader.ReadLineAsync();
+                        if (dir.Key == "cpp")
+                            dir.Value.WriteLine("};\n\n");
+                        else if(dir.Key =="cs")
+                            dir.Value.WriteLine("}\n\n");
                     }
-                    writer.WriteLine("}");
+                    isConvertStart= false;
+                    continue;
                 }
-            }
+                if (str == "~start" || str == "~end" || str == "")
+                    continue;
+                isConvertStart = true;
+                if (str.IndexOf("class") != -1)
+                {
+                    foreach (var dir in writers)
+                    {
+                        ConvertClass(str, dir.Value, dir.Key);
+                    }
+                }
+                else if (Regex.IsMatch(str, @"^(?!.*(#\w+).*(\$\w+)\(.*\))(#\w+ @\w+)$"))
+                {
+                    foreach (var dir in writers)
+                    {
+                        ConvertValue(str, dir.Value, dir.Key);
+                    }
+                }
+                else if (Regex.IsMatch(str, @"(#\w+).*(\$\w+)\(.*\)"))
+                {
+                    foreach (var dir in writers)
+                    {
+                        ConvertFunc(str, dir.Value, dir.Key);
+                    }
+                }
+                else
+                {
+                    foreach (var dir in writers)
+                    {
+                        ConvertFuncIn(str, dir.Value, dir.Key);
+                    }
+                }
 
-            writer.Close();
+                Console.Write('*');
+            }
+            foreach (var dir in writers)
+            {
+                dir.Value.Close();
+            }
             cppfile.Close();
+            csfile.Close();
             reader.Close();
             file.Close();
         }

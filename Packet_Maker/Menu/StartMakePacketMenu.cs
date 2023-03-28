@@ -44,7 +44,6 @@ namespace Packet_Maker.Menu
             "\t\t\t1.   Starting Make...\n" +
             "\t\t\t2.   File Select...\n" +
             "\t\t\t3.   Select Output Dir...\n" +
-            "\t\t\t4.   Select Language...\n" +
             "\t\t\tq.   back menu...\n";
     }
 }

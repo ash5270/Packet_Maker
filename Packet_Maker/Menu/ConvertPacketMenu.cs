@@ -10,7 +10,7 @@ namespace Packet_Maker.Menu
     public class ConvertPacketMenu : BaseMenu
     {
         private ConvertPacket m_convertPacket;
-
+       
         public ConvertPacketMenu(string name, MenuManger manger) : base(name, manger)
         {
             m_convertPacket=new ConvertPacket();
@@ -24,6 +24,8 @@ namespace Packet_Maker.Menu
         public override void StartProcess()
         {
             m_convertPacket.Start();
+            m_menuManger.PrevMenu();
+            App.SetInputMode(true);
         }
 
         public override string Print()

@@ -75,7 +75,7 @@ namespace Packet_Maker.Menu
             }
         }
 
-        private void PrevMenu()
+        public void PrevMenu()
         {
             m_curMenuIndex = m_menuIndexStack.Peek();
             m_menuIndexStack.Pop();
