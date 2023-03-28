@@ -103,8 +103,5 @@ namespace Packet_Maker.Menu
         {
             CurrentPrint();
         }
-
-
-
     }
 }
