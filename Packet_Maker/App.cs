@@ -11,27 +11,38 @@ namespace Packet_Maker
     public static class App
     {
         private static MenuManger menuManger;
-        private static bool m_isUpdate=false;
+
+        private static bool m_isUpdate = false;
+        private static bool m_isInput = false;
         public static void Init()
         {
             menuManger = new MenuManger();
+            OptionConfigManager.Init();
         }
 
         public static void Start()
         {
-            m_isUpdate= true;
-    
+            m_isUpdate = true;
+            m_isInput = true;
         }
+
         public static void Update()
         {
             while (m_isUpdate)
             {
-                Console.Write("\t\t\t->\t");
-                //키 입력
-                var key= Console.ReadKey();
-                menuManger.GetCommand(key.Key);
-                
+                if(m_isInput)
+                {
+                    Console.Write("\t\t\t->\t");
+                    //키 입력
+                    var key = Console.ReadKey();
+                    menuManger.GetCommand(key.Key);
+                }
             }
+        }
+
+        public static void SetInputMode(bool inputMode)
+        {
+            m_isInput = inputMode;
         }
 
         public static void Stop()

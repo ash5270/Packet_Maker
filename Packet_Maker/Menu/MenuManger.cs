@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Packet_Maker.Menu
 {
-
     public enum Menu_Type : int
     {
         //main 
@@ -65,7 +64,8 @@ namespace Packet_Maker.Menu
         //메뉴에서 입력 받았을때 입력 받은 값 
         public void GetCommand(ConsoleKey command)
         {
-            if (command == ConsoleKey.Q&&m_curMenuIndex!= (int)Menu_Type.Main)
+            if (command == ConsoleKey.Q&&(m_curMenuIndex!= (int)Menu_Type.Main&&
+                m_curMenuIndex!=(int)Menu_Type.ConvertStart))
             {
                 PrevMenu();
             }
@@ -73,7 +73,6 @@ namespace Packet_Maker.Menu
             {
                 m_menuDic[(Menu_Type)m_curMenuIndex].InputCommad(command);
             }
-            
         }
 
         private void PrevMenu()
