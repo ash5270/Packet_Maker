@@ -1,0 +1,10 @@
+public enum PacketID : Int32
+{
+    {0}
+}
+
+public abstract class Packet
+{
+    public abstract PacketID GetID();
+    public abstract Int32 GetSize();
+}

@@ -1,0 +1,16 @@
+public class P_ {0} : Packet
+{
+    public override PacketID GetID()
+    {
+        return PI_{ 0};
+    }
+    public override Int32 GetSize()
+    {
+       return {1};
+    }
+    //member values
+    {2}
+           
+    //member function
+    {3}
+}

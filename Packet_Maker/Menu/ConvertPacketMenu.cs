@@ -24,8 +24,9 @@ namespace Packet_Maker.Menu
         public override void StartProcess()
         {
             m_convertPacket.Start();
-            m_menuManger.PrevMenu();
+            m_menuManger.PopMenu();  
             App.SetInputMode(true);
+            m_menuManger.NextMenu(Menu_Type.Popup);
         }
 
         public override string Print()

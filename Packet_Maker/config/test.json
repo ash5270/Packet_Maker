@@ -1,0 +1,17 @@
+{
+    "C_REQ_LOGIN": {
+        "ID": 1111,
+        "values":{
+            "int": "value_name",
+            "int": "value_name"
+        },
+        "func": {
+            "name": "func_name",
+            "reutrn_type": "",
+            "arg": {
+                "Serilize": " serilize"
+            },
+            "return": ""
+        }
+    }
+}

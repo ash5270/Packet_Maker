@@ -1,0 +1,12 @@
+
+enum PacketID : int32_t
+{
+    {0}
+}
+
+class Packet
+{
+public:
+    virtual PacketID GetID();
+    virtual int32_t GetSize();
+}

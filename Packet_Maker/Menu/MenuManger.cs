@@ -22,6 +22,9 @@ namespace Packet_Maker.Menu
         SelectFile =11,
         SelectOutDir = 12,
         SelectLanguage = 13,
+
+        //popup
+        Popup=3000,
     }
 
     public class MenuManger
@@ -41,6 +44,7 @@ namespace Packet_Maker.Menu
             m_menuDic.Add(Menu_Type.Main, new MainMenu("main",this));
             m_menuDic.Add(Menu_Type.StartMenu, new StartMakePacketMenu("start",this));
             m_menuDic.Add(Menu_Type.ConvertStart,new ConvertPacketMenu("convert",this));
+            m_menuDic.Add(Menu_Type.Popup, new PopupMenu("popup", this));
             //
             CurrentPrint();
         }
@@ -81,6 +85,12 @@ namespace Packet_Maker.Menu
             m_menuIndexStack.Pop();
 
             CurrentPrint();
+        }
+
+        public void PopMenu()
+        {
+            m_curMenuIndex = m_menuIndexStack.Peek();
+            m_menuIndexStack.Pop();
         }
 
         public void ResetPrint()

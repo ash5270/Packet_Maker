@@ -204,17 +204,29 @@ namespace Packet_Maker.Process
             return true;
         }
 
-        public async void Start()
+        public void Start()
         {
             App.SetInputMode(false);
+            var readTexts = File.ReadAllLines("test.pml");
 
-            var file = File.Open("test.pml", System.IO.FileMode.Open);
-            StreamReader reader = new StreamReader(file);
+            var basePath = OptionConfigManager.data.output_dir;
+            if(basePath !="") {
+                basePath+="\\";
+            }else
+            {
+                basePath=Directory.GetCurrentDirectory()+"\\";
+            }
 
-            var cppfile = File.Open("packet.cpp", System.IO.FileMode.OpenOrCreate);
+            DirectoryInfo cppDir= new DirectoryInfo(basePath + "Cpp");
+            DirectoryInfo csDir = new DirectoryInfo(basePath + "Cs");
+
+            if (!cppDir.Exists) { cppDir.Create(); }
+            if (!csDir.Exists) { csDir.Create(); }
+
+            var cppfile = File.Open(basePath + "Cpp\\packet.cpp", System.IO.FileMode.OpenOrCreate);
             StreamWriter cppWriter = new StreamWriter(cppfile);
 
-            var csfile = File.Open("packet.cs", System.IO.FileMode.OpenOrCreate);
+            var csfile = File.Open(basePath+"Cs\\packet.cs", System.IO.FileMode.OpenOrCreate);
             StreamWriter csWriter = new StreamWriter(csfile);
 
             Dictionary<string, StreamWriter> writers = new Dictionary<string, StreamWriter>();
@@ -225,11 +237,12 @@ namespace Packet_Maker.Process
             bool isConvertStart = false;
 
             string? str = "";
-            int count = 0;
+            int index = 0;
             while (str != "~end")
             {
-                str = await reader.ReadLineAsync();
-                if(isConvertStart&&str=="")
+                str = readTexts[index];
+                index++;
+                if (isConvertStart&&str=="")
                 {
                     foreach (var dir in writers)
                     {
@@ -243,6 +256,7 @@ namespace Packet_Maker.Process
                 }
                 if (str == "~start" || str == "~end" || str == "")
                     continue;
+
                 isConvertStart = true;
                 if (str.IndexOf("class") != -1)
                 {
@@ -281,8 +295,6 @@ namespace Packet_Maker.Process
             }
             cppfile.Close();
             csfile.Close();
-            reader.Close();
-            file.Close();
         }
     }
 }

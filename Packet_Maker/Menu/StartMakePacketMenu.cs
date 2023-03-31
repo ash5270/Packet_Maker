@@ -21,13 +21,7 @@ namespace Packet_Maker.Menu
                     m_menuManger.NextMenu(Menu_Type.ConvertStart);
                     break;
                 case ConsoleKey.D2:
-                    m_menuManger.NextMenu(Menu_Type.SelectFile);
-                    break;
-                case ConsoleKey.D3:
                     m_menuManger.NextMenu(Menu_Type.SelectOutDir);
-                    break;
-                case ConsoleKey.D4:
-                    m_menuManger.NextMenu(Menu_Type.SelectLanguage);
                     break;
                 default:
                     m_menuManger.ResetPrint();
@@ -42,8 +36,7 @@ namespace Packet_Maker.Menu
 
         private string m_title =
             "\t\t\t1.   Starting Make...\n" +
-            "\t\t\t2.   File Select...\n" +
-            "\t\t\t3.   Select Output Dir...\n" +
+            "\t\t\t2.   Select Output Dir...\n" +
             "\t\t\tq.   back menu...\n";
     }
 }

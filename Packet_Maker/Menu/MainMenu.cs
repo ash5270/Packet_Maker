@@ -26,7 +26,13 @@ namespace Packet_Maker.Menu
                     m_menuManger.NextMenu(Menu_Type.StartMenu);
                     break;
                 case ConsoleKey.D2:
-                    m_menuManger.NextMenu(Menu_Type.DirOpen);
+                    var path = OptionConfigManager.data.output_dir;
+                    if (path == "")
+                        path = Directory.GetCurrentDirectory();
+
+                    System.Diagnostics.Process.Start(
+                        new System.Diagnostics.ProcessStartInfo("explorer",path));
+                    m_menuManger.ResetPrint();
                     break;
                 case ConsoleKey.D3:
                     App.Stop();
