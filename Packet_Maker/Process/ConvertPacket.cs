@@ -8,79 +8,157 @@ namespace Packet_Maker.Process
     public class ConvertPacket
     {
         private ReadBaseLanguage m_baseReadData;
-        private ReadBasePacket m_packetReadData;
+        private ReadPacket m_packetReadData;
+        private WritePacketFile m_writePacketFile;
 
         List<PacketData> m_packetDatas;
 
         public ConvertPacket()
         {
-            m_baseReadData = new ReadBaseLanguage();
-            m_packetReadData = new ReadBasePacket();
-            //디시리얼라이즈 한 데이터 저장
-            m_packetDatas=new List<PacketData>();
+           
         }
 
         public void Start()
         {
+            m_baseReadData = new ReadBaseLanguage();
+            m_packetReadData = new ReadPacket();
+            m_writePacketFile = new WritePacketFile();
+            //디시리얼라이즈 한 데이터 저장
+            m_packetDatas = new List<PacketData>();
+
             App.SetInputMode(false);
             //packet data load
             m_baseReadData.ReadAll();
 
-            foreach(var packets in m_packetReadData.JsonPackets)
+            foreach (var packets in m_packetReadData.JsonPackets)
             {
                 var packet = packets["Packet"];
-                var data= JsonSerializer.Deserialize<PacketData>(packet.ToJsonString());
+                var data = JsonSerializer.Deserialize<PacketData>(packet.ToJsonString());
                 m_packetDatas.Add(data);
             }
 
-            SumSyntax(m_packetDatas[0],"cs");
+            MakeCPP(m_packetDatas);
+            MakeCS(m_packetDatas);
         }
-        
-        //패킷 하나 만들기
-        private string SumSyntax(PacketData packet,string language)
+        //cpp 파일 string 생성
+        private void MakeCPP(List<PacketData> packets)
         {
-            string str =  m_baseReadData.CsBase;
-            string member= MemberSyntax(packet.values,language);
-            string serialize = SerializeSyntax(packet.values);
-            string deserialize= DeserializeSyntax(packet.values);
+            //패킷 ID
+            string id_str = SumPacketID(m_baseReadData.CppPacketID);
+            m_writePacketFile.WriteFile(id_str, "PacketID.cpp", @"Cpp\");
+            //패킷 Data
+            string packet_str = "";
+            foreach (var packet in packets)
+            {
+                packet_str += SumPacketData(packet, m_baseReadData.CppBase, "cpp");
+            }
+            m_writePacketFile.WriteFile(packet_str, "Packet.cpp", @"Cpp\");
+        }
+        //cs 파일 string 생성
+        private void MakeCS(List<PacketData> packets)
+        {
+            //패킷 ID
+            string id_str = SumPacketID(m_baseReadData.CsPacketID);
+            m_writePacketFile.WriteFile(id_str, "PacketID.cs", @"Cs\");
+            //패킷 Data
+            string packet_str = "";
+            foreach (var packet in packets)
+            {
+                packet_str += SumPacketData(packet, m_baseReadData.CsBase, "cs");
+            }
+            m_writePacketFile.WriteFile(packet_str, "Packet.cs", @"Cs\");
+        }
 
-            string result = string.Format(str, packet.name, packet.name, 2, member, serialize, deserialize);
+        //패킷 아이디 파일 string 값 합침
+        public string SumPacketID(string baseFile)
+        {
+            string str = baseFile;
+            string id = IDSyntaxCreate(m_packetDatas);
+            string result = string.Format(str, id);
             return result;
         }
 
-        private  string MemberSyntax(List<ValueData> values,string language)
+        //패킷 파일 string 값 합침
+        private string SumPacketData(PacketData packet, string baseFile, string language)
         {
-            string result="";
-            foreach(var val in values)
+            string str = baseFile;
+            string member = MemberSyntaxCreate(packet.values, language);
+            string serialize = SerializeSyntaxCreate(packet.values, language);
+            string deserialize = DeserializeSyntaxCreate(packet.values, language);
+            string size = SizeSyntaxCreate(packet.values, language);
+            string result = string.Format(str, packet.name, packet.name, size, member, serialize, deserialize);
+            return result;
+        }
+
+        //packet 문자열 구문 생성
+        private string IDSyntaxCreate(List<PacketData> packets)
+        {
+            string result = "";
+            foreach (var packet in packets) {
+
+                result += string.Format("{0}={1},\n", packet.name, packet.ID);
+            }
+
+            return result;
+        }
+
+        private string MemberSyntaxCreate(List<ValueData> values, string language)
+        {
+            string result = "";
+            foreach (var val in values)
             {
                 var type = OptionConfigManager.LanguageConfig.GetProperty(language).GetProperty(val.type).GetString();
-                if(language=="cs")
-                    result += string.Format("public {0} {1};\n", type , val.name);
+                if (language == "cs")
+                    result += string.Format("public {0} {1};\n\t", type, val.name);
                 else
-                    result += string.Format("{0} {1};\n", type, val.name);
+                    result += string.Format("{0} {1};\n\t", type, val.name);
             }
-
             return result;
         }
 
-        private string SerializeSyntax(List<ValueData> values)
+        private string SizeSyntaxCreate(List<ValueData> values, string language)
         {
             string result = "";
             foreach (var val in values)
             {
-                var type = OptionConfigManager.LanguageConfig.GetProperty("cs").GetProperty(val.type).GetString();
-                result += string.Format("buffer.write({0});\n", val.name);
+                var type = OptionConfigManager.LanguageConfig.GetProperty(language).GetProperty(val.type).GetString();
+                if(val.type=="string")
+                {
+                    var len_type  = OptionConfigManager.LanguageConfig.
+                        GetProperty(language).GetProperty("short");
+                    if(language=="cs")
+                        result += string.Format("sizeof{0}+{1}.Length +", len_type, val.name);
+                    else
+                        result += string.Format("sizeof{0}+{1}.length() +", len_type, val.name);
+                }
+                else
+                    result += string.Format("sizeof({0})+", type);
             }
+
+            var lastOp= result.LastIndexOf('+');
+            result = result.Remove(lastOp, 1);
 
             return result;
         }
-        private string DeserializeSyntax(List<ValueData> values)
+
+        private string SerializeSyntaxCreate(List<ValueData> values, string language)
         {
             string result = "";
             foreach (var val in values)
             {
-                var type = OptionConfigManager.LanguageConfig.GetProperty("cs").GetProperty(val.type).GetString();
-                result += string.Format("buffer.read({0});\n", val.name);
+                var type = OptionConfigManager.LanguageConfig.GetProperty(language).GetProperty(val.type).GetString();
+                result += string.Format("buffer.Write({0});\n\t\t", val.name);
+            }
+
+            return result;
+        }
+        private string DeserializeSyntaxCreate(List<ValueData> values, string language)
+        {
+            string result = "";
+            foreach (var val in values)
+            {
+                var type = OptionConfigManager.LanguageConfig.GetProperty(language).GetProperty(val.type).GetString();
+                result += string.Format("buffer.Read({0});\n\t\t", val.name);
             }
 
             return result;

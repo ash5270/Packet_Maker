@@ -1,0 +1,30 @@
+[
+  {
+    "Packet": {
+      "name": "C_REQ_LOGIN",
+      "ID": 1000,
+      "values": [
+        {
+          "type": "int",
+          "name": "value"
+        },
+        {
+          "type": "float",
+          "name": "value2"
+        }
+      ]
+    }
+  },
+  {
+    "Packet": {
+      "name": "S_RES_LOGIN",
+      "ID": 2000,
+      "values": [
+        {
+          "type": "float",
+          "name": "check"
+        }
+      ]
+    }
+  }
+]

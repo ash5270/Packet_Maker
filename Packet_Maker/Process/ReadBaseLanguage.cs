@@ -16,8 +16,8 @@ namespace Packet_Maker.Process
         public string? CppPacketID;
 
         public ReadBaseLanguage() 
-        { 
-            
+        {
+            m_baseLanguagePath = OptionConfigManager.ConfigData.packet_base_file_path;
         }
 
         public void ReadAll()

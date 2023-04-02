@@ -26,7 +26,7 @@ namespace Packet_Maker.Menu
                     m_menuManger.NextMenu(Menu_Type.StartMenu);
                     break;
                 case ConsoleKey.D2:
-                    var path = OptionConfigManager.data.output_dir;
+                    var path = OptionConfigManager.ConfigData.output_dir;
                     if (path == "")
                         path = Directory.GetCurrentDirectory();
 
@@ -35,6 +35,7 @@ namespace Packet_Maker.Menu
                     m_menuManger.ResetPrint();
                     break;
                 case ConsoleKey.D3:
+                case ConsoleKey.Q:
                     App.Stop();
                     break;
                 default:

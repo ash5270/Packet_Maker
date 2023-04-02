@@ -1,0 +1,25 @@
+public class P_{0} : Packet
+{{
+    public override PacketID GetID()
+    {{
+        return PI_{1};
+    }}
+    public override Int32 GetSize()
+    {{
+       return {2};
+    }}
+    //member values
+    {3}
+           
+    //member function
+    public override void Serialize(Buffer buffer)
+    {{
+	 {4}
+    }}
+
+    public override void Deserialize(Buffer buffer)
+    {{
+	 {5}
+    }}
+}}
+
